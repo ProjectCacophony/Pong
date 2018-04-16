@@ -9,6 +9,8 @@ import (
 
 	"errors"
 
+	"encoding/base64"
+
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/aws/aws-sdk-go/aws"
@@ -86,22 +88,29 @@ func Handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyRespo
 	receivedEvent := result.Messages[0]
 
 	if receivedEvent.MessageAttributes == nil {
-		fmt.Println("received event with no event type from queue")
+		fmt.Println("received message with no event type from queue")
 		return events.APIGatewayProxyResponse{Body: request.Body, StatusCode: 500},
-			errors.New("received event with no event type from queue")
+			errors.New("received message with no event type from queue")
 	}
 
 	if eventType, ok := receivedEvent.MessageAttributes["EventType"]; !ok || eventType == nil || eventType.String() == "" {
-		fmt.Println("received event with no event type from queue")
+		fmt.Println("received message with no event type from queue")
 		return events.APIGatewayProxyResponse{Body: request.Body, StatusCode: 500},
-			errors.New("received event with no event type from queue")
+			errors.New("received message with no event type from queue")
+	}
+
+	msgpackData, err := base64.StdEncoding.DecodeString(*receivedEvent.Body)
+	if err != nil {
+		fmt.Println("unable to base64 decode the message data")
+		return events.APIGatewayProxyResponse{Body: request.Body, StatusCode: 500},
+			errors.New("unable to base64 decode the message data")
 	}
 
 	// match and unpack received event
 	switch receivedEvent.MessageAttributes["EventType"].String() {
 	case "discordgo.MessageCreate":
 		var m *discordgo.MessageCreate
-		err = msgpack.Unmarshal([]byte(*receivedEvent.Body), &m)
+		err = msgpack.Unmarshal(msgpackData, &m)
 		if err != nil {
 			fmt.Println("error unpacking event:", err.Error())
 			return events.APIGatewayProxyResponse{Body: request.Body, StatusCode: 500},
