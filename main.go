@@ -56,35 +56,67 @@ func Handler(request events.KinesisEvent) (events.APIGatewayProxyResponse, error
 			nil
 	}
 
-	var m discordgo.MessageCreate
+	for _, record := range request.Records {
+		var m DMessageCreateEvent
 
-	err = jsoniter.Unmarshal(request.Records[0].Kinesis.Data, &m)
-	if err != nil {
-		fmt.Println("error unpacking event:", err.Error())
-		return events.APIGatewayProxyResponse{
-				Body:       "",
-				StatusCode: 200,
-			},
-			nil
-	}
+		err = jsoniter.Unmarshal(record.Kinesis.Data, &m)
+		if err != nil {
+			fmt.Println("error unpacking event:", err.Error())
+			return events.APIGatewayProxyResponse{
+					Body:       "",
+					StatusCode: 200,
+				},
+				nil
+		}
 
-	err = MessageCreate(m)
-	if err != nil {
-		fmt.Println("error processing discordgo.MessageCreate:", err.Error())
-		return events.APIGatewayProxyResponse{
-				Body:       "",
-				StatusCode: 200,
-			},
-			nil
+		err = MessageCreate(record, m)
+		if err != nil {
+			fmt.Println("error processing discordgo.MessageCreate:", err.Error())
+			return events.APIGatewayProxyResponse{
+					Body:       "",
+					StatusCode: 200,
+				},
+				nil
+		}
 	}
 
 	return events.APIGatewayProxyResponse{Body: "", StatusCode: 200}, nil
 }
 
-func MessageCreate(m discordgo.MessageCreate) (err error) {
+func MessageCreate(event events.KinesisEventRecord, messageCreate DMessageCreateEvent) (err error) {
 	// respond "pong!" to "ping"
-	if strings.ToLower(strings.TrimSpace(m.Content)) == "ping" {
-		_, err = Dg.ChannelMessageSend(m.ChannelID, "pong!\nInit at "+InitAt.Format(time.StampNano)+"\nHandler at "+HandleAt.Format(time.StampNano))
+	if strings.ToLower(strings.TrimSpace(messageCreate.Event.Content)) == "ping" {
+		_, err = Dg.ChannelMessageSendComplex(messageCreate.Event.ChannelID, &discordgo.MessageSend{
+			Embed: &discordgo.MessageEmbed{
+				Title:     "Pong!",
+				Timestamp: time.Now().Format(time.RFC3339),
+				Footer: &discordgo.MessageEmbedFooter{
+					Text: "requested by " + messageCreate.Event.Author.Username + "#" + messageCreate.Event.Author.Discriminator + " | " +
+						//"Region " + event.AwsRegion + " | " +
+						//"Event #" + event.EventID + " | " +
+						//"Source " + event.EventSource + " | " +
+						//"Name " + event.EventName + " | " +
+						"Sequence #" + event.Kinesis.SequenceNumber,
+					IconURL: messageCreate.Event.Author.AvatarURL("64"),
+				},
+				Author: &discordgo.MessageEmbedAuthor{
+					Name:    messageCreate.BotUser.Username + "#" + messageCreate.BotUser.Discriminator,
+					IconURL: messageCreate.BotUser.AvatarURL("64"),
+				},
+				Fields: []*discordgo.MessageEmbedField{
+					{
+						Name:   "Init",
+						Value:  InitAt.Format(time.StampNano),
+						Inline: false,
+					},
+					{
+						Name:   "Handler",
+						Value:  HandleAt.Format(time.StampNano),
+						Inline: false,
+					},
+				},
+			},
+		})
 		if err != nil {
 			return err
 		}
