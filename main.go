@@ -10,6 +10,8 @@ import (
 
 	"time"
 
+	"strconv"
+
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/bwmarrin/discordgo"
@@ -114,6 +116,11 @@ func MessageCreate(event dhelpers.EventMessageCreate) (err error) {
 					{
 						Name:   "Gateway => Lambda",
 						Value:  HandleAt.Sub(event.GatewayReceivedAt).String(),
+						Inline: false,
+					},
+					{
+						Name:   "Gateway Uptime",
+						Value:  time.Now().Sub(event.GatewayStarted).String() + "\nStarted at " + strconv.FormatInt(event.GatewayStarted.Unix(), 10),
 						Inline: false,
 					},
 				},
