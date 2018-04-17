@@ -4,8 +4,6 @@ import (
 	"flag"
 	"os"
 
-	"strings"
-
 	"fmt"
 
 	"time"
@@ -86,7 +84,8 @@ func Handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyRespo
 
 func MessageCreate(event DDiscordEventMessageCreate) (err error) {
 	// respond "pong!" to "ping"
-	if strings.HasPrefix(strings.ToLower(strings.TrimSpace(event.Event.Content)), event.Prefix+"ping") {
+	switch event.Alias {
+	case "ping":
 		_, err = Dg.ChannelMessageSendComplex(event.Event.ChannelID, &discordgo.MessageSend{
 			Embed: &discordgo.MessageEmbed{
 				Title:     "Pong!",

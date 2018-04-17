@@ -49,6 +49,7 @@ const (
 )
 
 type DDiscordEvent struct {
+	Alias             string
 	Type              EventType
 	Prefix            string
 	Event             interface{}
@@ -59,6 +60,7 @@ type DDiscordEvent struct {
 }
 
 type DDiscordEventMessageCreate struct {
+	Alias             string
 	Type              EventType
 	Prefix            string
 	Event             discordgo.MessageCreate
