@@ -47,11 +47,9 @@ func Handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyRespo
 	// set handle time
 	HandleAt = time.Now()
 
-	var m DMessageCreateEvent
-
-	err = jsoniter.Unmarshal([]byte(request.Body), &m)
-	if err != nil {
-		fmt.Println("error unpacking event:", err.Error())
+	eventType, ok := request.QueryStringParameters["type"]
+	if !ok {
+		fmt.Println("error processing event without event type")
 		return events.APIGatewayProxyResponse{
 				Body:       "",
 				StatusCode: 200,
@@ -59,37 +57,47 @@ func Handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyRespo
 			nil
 	}
 
-	err = MessageCreate(m)
-	if err != nil {
-		fmt.Println("error processing discordgo.MessageCreate:", err.Error())
-		return events.APIGatewayProxyResponse{
-				Body:       "",
-				StatusCode: 200,
-			},
-			nil
+	switch eventType {
+	case MessageCreateEventType:
+		var event DDiscordEventMessageCreate
+
+		err = jsoniter.Unmarshal([]byte(request.Body), &event)
+		if err != nil {
+			fmt.Println("error unpacking event:", err.Error())
+			return events.APIGatewayProxyResponse{
+					Body:       "",
+					StatusCode: 200,
+				},
+				nil
+		}
+
+		err = MessageCreate(event)
+		if err != nil {
+			fmt.Println("error processing", event.Type, ":", err.Error())
+			return events.APIGatewayProxyResponse{
+					Body:       "",
+					StatusCode: 200,
+				},
+				nil
+		}
 	}
 	return events.APIGatewayProxyResponse{Body: "", StatusCode: 200}, nil
 }
 
-func MessageCreate(messageCreate DMessageCreateEvent) (err error) {
+func MessageCreate(event DDiscordEventMessageCreate) (err error) {
 	// respond "pong!" to "ping"
-	if strings.ToLower(strings.TrimSpace(messageCreate.Event.Content)) == "ping" {
-		_, err = Dg.ChannelMessageSendComplex(messageCreate.Event.ChannelID, &discordgo.MessageSend{
+	if strings.HasPrefix(strings.ToLower(strings.TrimSpace(event.Event.Content)), event.Prefix+"ping") {
+		_, err = Dg.ChannelMessageSendComplex(event.Event.ChannelID, &discordgo.MessageSend{
 			Embed: &discordgo.MessageEmbed{
 				Title:     "Pong!",
 				Timestamp: time.Now().Format(time.RFC3339),
 				Footer: &discordgo.MessageEmbedFooter{
-					Text: "requested by " + messageCreate.Event.Author.Username + "#" + messageCreate.Event.Author.Discriminator,
-					//"Region " + event.AwsRegion + " | " +
-					//"Event #" + event.EventID + " | " +
-					//"Source " + event.EventSource + " | " +
-					//"Name " + event.EventName + " | " +
-					//"Request #" + context.RequestID,
-					IconURL: messageCreate.Event.Author.AvatarURL("64"),
+					Text:    "requested by " + event.Event.Author.Username + "#" + event.Event.Author.Discriminator,
+					IconURL: event.Event.Author.AvatarURL("64"),
 				},
 				Author: &discordgo.MessageEmbedAuthor{
-					Name:    messageCreate.BotUser.Username + "#" + messageCreate.BotUser.Discriminator,
-					IconURL: messageCreate.BotUser.AvatarURL("64"),
+					Name:    event.BotUser.Username + "#" + event.BotUser.Discriminator,
+					IconURL: event.BotUser.AvatarURL("64"),
 				},
 				Fields: []*discordgo.MessageEmbedField{
 					{
@@ -104,7 +112,7 @@ func MessageCreate(messageCreate DMessageCreateEvent) (err error) {
 					},
 					{
 						Name:   "Gateway => Lambda",
-						Value:  time.Now().Sub(messageCreate.GatewayReceivedAt).String(),
+						Value:  HandleAt.Sub(event.GatewayReceivedAt).String(),
 						Inline: false,
 					},
 				},
