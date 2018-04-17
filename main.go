@@ -4,6 +4,8 @@ import (
 	"flag"
 	"os"
 
+	"gitlab.com/project-d-collab/dhelpers"
+
 	"fmt"
 
 	"time"
@@ -56,8 +58,8 @@ func Handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyRespo
 	}
 
 	switch eventType {
-	case MessageCreateEventType:
-		var event DDiscordEventMessageCreate
+	case dhelpers.MessageCreateEventType:
+		var event dhelpers.EventMessageCreate
 
 		err = jsoniter.Unmarshal([]byte(request.Body), &event)
 		if err != nil {
@@ -82,7 +84,7 @@ func Handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyRespo
 	return events.APIGatewayProxyResponse{Body: "", StatusCode: 200}, nil
 }
 
-func MessageCreate(event DDiscordEventMessageCreate) (err error) {
+func MessageCreate(event dhelpers.EventMessageCreate) (err error) {
 	// respond "pong!" to "ping"
 	switch event.Alias {
 	case "ping":
