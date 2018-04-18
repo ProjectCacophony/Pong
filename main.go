@@ -12,6 +12,8 @@ import (
 
 	"strconv"
 
+	"strings"
+
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/bwmarrin/discordgo"
@@ -89,6 +91,11 @@ func Handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyRespo
 func MessageCreate(event dhelpers.EventMessageCreate) (err error) {
 	// respond "pong!" to "ping"
 	switch event.Alias {
+	case "ping-myself":
+		_, err = Dg.ChannelMessageSend(event.Event.ChannelID, "/ping")
+		if err != nil {
+			return err
+		}
 	case "ping":
 		_, err = Dg.ChannelMessageSendComplex(event.Event.ChannelID, &discordgo.MessageSend{
 			Embed: &discordgo.MessageEmbed{
@@ -121,6 +128,16 @@ func MessageCreate(event dhelpers.EventMessageCreate) (err error) {
 					{
 						Name:   "Gateway Uptime",
 						Value:  time.Now().Sub(event.GatewayStarted).String() + "\nStarted at " + strconv.FormatInt(event.GatewayStarted.Unix(), 10),
+						Inline: false,
+					},
+					{
+						Name:   "Args",
+						Value:  "`" + strings.Join(event.Args, "`, `") + "`",
+						Inline: false,
+					},
+					{
+						Name:   "Used Prefix",
+						Value:  event.Prefix,
 						Inline: false,
 					},
 				},
