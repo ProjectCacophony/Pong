@@ -20,36 +20,38 @@ import (
 )
 
 var (
-	Token    string
-	Dg       *discordgo.Session
-	InitAt   time.Time
-	HandleAt time.Time
+	token          string
+	dg             *discordgo.Session
+	initAt         time.Time
+	initFinishedAt time.Time
 )
 
 func init() {
-	var err error
 	// set init time
-	InitAt = time.Now()
+	initAt = time.Now()
+	var err error
 	// Parse command line flags (-t DISCORD_BOT_TOKEN)
-	flag.StringVar(&Token, "t", "", "Discord Bot Token")
+	flag.StringVar(&token, "t", "", "Discord Bot Token")
 	flag.Parse()
 	// overwrite with environment variables if set DISCORD_BOT_TOKEN=…
 	if os.Getenv("DISCORD_BOT_TOKEN") != "" {
-		Token = os.Getenv("DISCORD_BOT_TOKEN")
+		token = os.Getenv("DISCORD_BOT_TOKEN")
 	}
 	// create a new Discordgo Bot Client
-	fmt.Println("connecting to Discord, Token Length:", len(Token))
-	Dg, err = discordgo.New("Bot " + Token)
+	fmt.Println("connecting to Discord, Token Length:", len(token))
+	dg, err = discordgo.New("Bot " + token)
 	if err != nil {
 		panic(err)
 	}
+
+	initFinishedAt = time.Now()
 }
 
 func Handler(container dhelpers.EventContainer) error {
 	var err error
 
 	// set handle time
-	HandleAt = time.Now()
+	handleAt := time.Now()
 
 	switch container.Type {
 	case dhelpers.MessageCreateEventType:
@@ -59,7 +61,7 @@ func Handler(container dhelpers.EventContainer) error {
 			return errors.New("error unmarshaling " + string(container.Type) + ": " + err.Error())
 		}
 
-		err = MessageCreate(container, event)
+		err = MessageCreate(handleAt, container, event)
 		if err != nil {
 			return errors.New("error processing " + string(container.Type) + ": " + err.Error())
 		}
@@ -68,16 +70,16 @@ func Handler(container dhelpers.EventContainer) error {
 	return nil
 }
 
-func MessageCreate(container dhelpers.EventContainer, event dhelpers.EventMessageCreate) (err error) {
+func MessageCreate(handleAt time.Time, container dhelpers.EventContainer, event dhelpers.EventMessageCreate) (err error) {
 	// respond "pong!" to "ping"
 	switch event.Alias {
 	case "ping-myself":
-		_, err = Dg.ChannelMessageSend(event.Event.ChannelID, "/ping")
+		_, err = dg.ChannelMessageSend(event.Event.ChannelID, "/ping")
 		if err != nil {
 			return err
 		}
 	case "ping":
-		_, err = Dg.ChannelMessageSendComplex(event.Event.ChannelID, &discordgo.MessageSend{
+		_, err = dg.ChannelMessageSendComplex(event.Event.ChannelID, &discordgo.MessageSend{
 			Embed: &discordgo.MessageEmbed{
 				Title:     "Pong!",
 				Timestamp: time.Now().Format(time.RFC3339),
@@ -92,17 +94,17 @@ func MessageCreate(container dhelpers.EventContainer, event dhelpers.EventMessag
 				Fields: []*discordgo.MessageEmbedField{
 					{
 						Name:   "Init",
-						Value:  InitAt.Format(time.StampNano),
+						Value:  "At " + initAt.Format(time.StampNano) + "\nTook " + initFinishedAt.Sub(initAt).String(),
 						Inline: false,
 					},
 					{
 						Name:   "Handler",
-						Value:  HandleAt.Format(time.StampNano),
+						Value:  handleAt.Format(time.StampNano),
 						Inline: false,
 					},
 					{
 						Name:   "Gateway => Lambda",
-						Value:  HandleAt.Sub(container.ReceivedAt).String(),
+						Value:  handleAt.Sub(container.ReceivedAt).String(),
 						Inline: false,
 					},
 					{
