@@ -135,5 +135,6 @@ func MessageCreate(handleAt time.Time, container dhelpers.EventContainer) (err e
 }
 
 func main() {
-	lambda.Start(Handler)
+	wrappedHandler := newHandler(Handler)
+	lambda.StartHandler(wrappedHandler)
 }
