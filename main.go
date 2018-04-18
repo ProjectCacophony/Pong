@@ -15,7 +15,6 @@ import (
 
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/bwmarrin/discordgo"
-	"github.com/json-iterator/go"
 	"gitlab.com/project-d-collab/dhelpers"
 )
 
@@ -48,20 +47,17 @@ func init() {
 }
 
 func Handler(container dhelpers.EventContainer) error {
-	var err error
+	// benchmark
+	handlerStart := time.Now()
+	defer func() {
+		fmt.Println("handler took", time.Now().Sub(handlerStart).String())
+	}()
 
-	// set handle time
-	handleAt := time.Now()
+	var err error
 
 	switch container.Type {
 	case dhelpers.MessageCreateEventType:
-		var event dhelpers.EventMessageCreate
-		err = jsoniter.Unmarshal(container.Data, &event)
-		if err != nil {
-			return errors.New("error unmarshaling " + string(container.Type) + ": " + err.Error())
-		}
-
-		err = MessageCreate(handleAt, container, event)
+		err = MessageCreate(handlerStart, container)
 		if err != nil {
 			return errors.New("error processing " + string(container.Type) + ": " + err.Error())
 		}
@@ -70,26 +66,32 @@ func Handler(container dhelpers.EventContainer) error {
 	return nil
 }
 
-func MessageCreate(handleAt time.Time, container dhelpers.EventContainer, event dhelpers.EventMessageCreate) (err error) {
+func MessageCreate(handleAt time.Time, container dhelpers.EventContainer) (err error) {
+	// benchmark
+	messageCreateStart := time.Now()
+	defer func() {
+		fmt.Println("messagecreate took", time.Now().Sub(messageCreateStart).String())
+	}()
+
 	// respond "pong!" to "ping"
-	switch event.Alias {
+	switch container.Alias {
 	case "ping-myself":
-		_, err = dg.ChannelMessageSend(event.Event.ChannelID, "/ping")
+		_, err = dg.ChannelMessageSend(container.MessageCreate.ChannelID, "/ping")
 		if err != nil {
 			return err
 		}
 	case "ping":
-		_, err = dg.ChannelMessageSendComplex(event.Event.ChannelID, &discordgo.MessageSend{
+		_, err = dg.ChannelMessageSendComplex(container.MessageCreate.ChannelID, &discordgo.MessageSend{
 			Embed: &discordgo.MessageEmbed{
 				Title:     "Pong!",
 				Timestamp: time.Now().Format(time.RFC3339),
 				Footer: &discordgo.MessageEmbedFooter{
-					Text:    "requested by " + event.Event.Author.Username + "#" + event.Event.Author.Discriminator,
-					IconURL: event.Event.Author.AvatarURL("64"),
+					Text:    "requested by " + container.MessageCreate.Author.Username + "#" + container.MessageCreate.Author.Discriminator,
+					IconURL: container.MessageCreate.Author.AvatarURL("64"),
 				},
 				Author: &discordgo.MessageEmbedAuthor{
-					Name:    event.BotUser.Username + "#" + event.BotUser.Discriminator,
-					IconURL: event.BotUser.AvatarURL("64"),
+					Name:    container.BotUser.Username + "#" + container.BotUser.Discriminator,
+					IconURL: container.BotUser.AvatarURL("64"),
 				},
 				Fields: []*discordgo.MessageEmbedField{
 					{
@@ -114,12 +116,12 @@ func MessageCreate(handleAt time.Time, container dhelpers.EventContainer, event 
 					},
 					{
 						Name:   "Args",
-						Value:  "`" + strings.Join(event.Args, "`, `") + "`",
+						Value:  "`" + strings.Join(container.Args, "`, `") + "`",
 						Inline: false,
 					},
 					{
 						Name:   "Used Prefix",
-						Value:  event.Prefix,
+						Value:  container.Prefix,
 						Inline: false,
 					},
 				},
