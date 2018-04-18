@@ -4,20 +4,19 @@ import (
 	"flag"
 	"os"
 
-	"gitlab.com/project-d-collab/dhelpers"
-
 	"fmt"
 
 	"time"
 
 	"strconv"
-
 	"strings"
 
-	"github.com/aws/aws-lambda-go/events"
+	"errors"
+
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/bwmarrin/discordgo"
 	"github.com/json-iterator/go"
+	"gitlab.com/project-d-collab/dhelpers"
 )
 
 var (
@@ -46,49 +45,30 @@ func init() {
 	}
 }
 
-func Handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
+func Handler(container dhelpers.EventContainer) error {
 	var err error
+
 	// set handle time
 	HandleAt = time.Now()
 
-	eventType, ok := request.QueryStringParameters["type"]
-	if !ok {
-		fmt.Println("error processing event without event type")
-		return events.APIGatewayProxyResponse{
-				Body:       "",
-				StatusCode: 200,
-			},
-			nil
-	}
-
-	switch eventType {
+	switch container.Type {
 	case dhelpers.MessageCreateEventType:
 		var event dhelpers.EventMessageCreate
-
-		err = jsoniter.Unmarshal([]byte(request.Body), &event)
+		err = jsoniter.Unmarshal(container.Data, &event)
 		if err != nil {
-			fmt.Println("error unpacking event:", err.Error())
-			return events.APIGatewayProxyResponse{
-					Body:       "",
-					StatusCode: 200,
-				},
-				nil
+			return errors.New("error unmarshaling " + string(container.Type) + ": " + err.Error())
 		}
 
-		err = MessageCreate(event)
+		err = MessageCreate(container, event)
 		if err != nil {
-			fmt.Println("error processing", event.Type, ":", err.Error())
-			return events.APIGatewayProxyResponse{
-					Body:       "",
-					StatusCode: 200,
-				},
-				nil
+			return errors.New("error processing " + string(container.Type) + ": " + err.Error())
 		}
 	}
-	return events.APIGatewayProxyResponse{Body: "", StatusCode: 200}, nil
+
+	return nil
 }
 
-func MessageCreate(event dhelpers.EventMessageCreate) (err error) {
+func MessageCreate(container dhelpers.EventContainer, event dhelpers.EventMessageCreate) (err error) {
 	// respond "pong!" to "ping"
 	switch event.Alias {
 	case "ping-myself":
@@ -122,12 +102,12 @@ func MessageCreate(event dhelpers.EventMessageCreate) (err error) {
 					},
 					{
 						Name:   "Gateway => Lambda",
-						Value:  HandleAt.Sub(event.GatewayReceivedAt).String(),
+						Value:  HandleAt.Sub(container.ReceivedAt).String(),
 						Inline: false,
 					},
 					{
 						Name:   "Gateway Uptime",
-						Value:  time.Now().Sub(event.GatewayStarted).String() + "\nStarted at " + strconv.FormatInt(event.GatewayStarted.Unix(), 10),
+						Value:  time.Now().Sub(container.GatewayStarted).String() + "\nStarted at " + strconv.FormatInt(container.GatewayStarted.Unix(), 10),
 						Inline: false,
 					},
 					{
