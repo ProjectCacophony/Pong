@@ -19,24 +19,31 @@ import (
 )
 
 var (
-	token          string
-	dg             *discordgo.Session
-	initAt         time.Time
-	initFinishedAt time.Time
+	token           string
+	discordEndpoint string
+	dg              *discordgo.Session
+	initAt          time.Time
+	initFinishedAt  time.Time
 )
 
 func init() {
 	// set init time
 	initAt = time.Now()
 	var err error
-	// Parse command line flags (-t DISCORD_BOT_TOKEN)
+	// Parse command line flags (-t DISCORD_BOT_TOKEN -discord-endpoint DISCORD_ENDPOINT)
 	flag.StringVar(&token, "t", "", "Discord Bot Token")
+	flag.StringVar(&discordEndpoint, "discord-endpoint", "https://discordapp.com/", "Discord Endpoint URL")
 	flag.Parse()
-	// overwrite with environment variables if set DISCORD_BOT_TOKEN=…
+	// overwrite with environment variables if set DISCORD_BOT_TOKEN=… DISCORD_EDNPOINT=…
 	if os.Getenv("DISCORD_BOT_TOKEN") != "" {
 		token = os.Getenv("DISCORD_BOT_TOKEN")
 	}
+	if os.Getenv("DISCORD_ENDPOINT") != "" {
+		discordEndpoint = os.Getenv("DISCORD_ENDPOINT")
+	}
 	// create a new Discordgo Bot Client
+	dhelpers.SetDiscordEndpoints(discordEndpoint)
+	fmt.Println("set Discord Endpoint API URL to", discordgo.EndpointAPI)
 	fmt.Println("connecting to Discord, Token Length:", len(token))
 	dg, err = discordgo.New("Bot " + token)
 	if err != nil {
