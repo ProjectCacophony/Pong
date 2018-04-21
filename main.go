@@ -82,69 +82,71 @@ func MessageCreate(handleAt time.Time, container dhelpers.EventContainer) (err e
 		fmt.Println("messagecreate took", time.Since(messageCreateStart).String())
 	}()
 
+	if len(container.Args) < 0 {
+		return nil
+	}
+
 	// respond "pong!" to "ping"
-	for _, alias := range container.Alias {
-		switch alias {
-		case "ping-myself":
-			_, err = dg.ChannelMessageSend(container.MessageCreate.ChannelID, "/ping")
-			if err != nil {
-				return err
-			}
-			return nil
-		case "ping":
-			_, err = dg.ChannelMessageSendComplex(container.MessageCreate.ChannelID, &discordgo.MessageSend{
-				Embed: &discordgo.MessageEmbed{
-					Title:     "Pong!",
-					Timestamp: time.Now().Format(time.RFC3339),
-					Footer: &discordgo.MessageEmbedFooter{
-						Text:    "requested by " + container.MessageCreate.Author.Username + "#" + container.MessageCreate.Author.Discriminator,
-						IconURL: container.MessageCreate.Author.AvatarURL("64"),
+	switch container.Args[0] {
+	case "ping-myself":
+		_, err = dg.ChannelMessageSend(container.MessageCreate.ChannelID, "/ping")
+		if err != nil {
+			return err
+		}
+		return nil
+	case "ping":
+		_, err = dg.ChannelMessageSendComplex(container.MessageCreate.ChannelID, &discordgo.MessageSend{
+			Embed: &discordgo.MessageEmbed{
+				Title:     "Pong!",
+				Timestamp: time.Now().Format(time.RFC3339),
+				Footer: &discordgo.MessageEmbedFooter{
+					Text:    "requested by " + container.MessageCreate.Author.Username + "#" + container.MessageCreate.Author.Discriminator,
+					IconURL: container.MessageCreate.Author.AvatarURL("64"),
+				},
+				/*
+					Author: &discordgo.MessageEmbedAuthor{
+						Name:    container.BotUser.Username + "#" + container.BotUser.Discriminator,
+						IconURL: container.BotUser.AvatarURL("64"),
 					},
-					/*
-						Author: &discordgo.MessageEmbedAuthor{
-							Name:    container.BotUser.Username + "#" + container.BotUser.Discriminator,
-							IconURL: container.BotUser.AvatarURL("64"),
-						},
-					*/
-					Fields: []*discordgo.MessageEmbedField{
-						{
-							Name:   "Init",
-							Value:  "At " + initAt.Format(time.StampNano) + "\nTook " + initFinishedAt.Sub(initAt).String(),
-							Inline: false,
-						},
-						{
-							Name:   "Handler",
-							Value:  handleAt.Format(time.StampNano),
-							Inline: false,
-						},
-						{
-							Name:   "Gateway => Lambda",
-							Value:  handleAt.Sub(container.ReceivedAt).String(),
-							Inline: false,
-						},
-						{
-							Name:   "Gateway Uptime",
-							Value:  time.Since(container.GatewayStarted).String() + "\nStarted at " + strconv.FormatInt(container.GatewayStarted.Unix(), 10),
-							Inline: false,
-						},
-						{
-							Name:   "Args",
-							Value:  "`" + strings.Join(container.Args, "`, `") + "`",
-							Inline: false,
-						},
-						{
-							Name:   "Used Prefix",
-							Value:  container.Prefix,
-							Inline: false,
-						},
+				*/
+				Fields: []*discordgo.MessageEmbedField{
+					{
+						Name:   "Init",
+						Value:  "At " + initAt.Format(time.StampNano) + "\nTook " + initFinishedAt.Sub(initAt).String(),
+						Inline: false,
+					},
+					{
+						Name:   "Handler",
+						Value:  handleAt.Format(time.StampNano),
+						Inline: false,
+					},
+					{
+						Name:   "Gateway => Lambda",
+						Value:  handleAt.Sub(container.ReceivedAt).String(),
+						Inline: false,
+					},
+					{
+						Name:   "Gateway Uptime",
+						Value:  time.Since(container.GatewayStarted).String() + "\nStarted at " + strconv.FormatInt(container.GatewayStarted.Unix(), 10),
+						Inline: false,
+					},
+					{
+						Name:   "Args",
+						Value:  "`" + strings.Join(container.Args, "`, `") + "`",
+						Inline: false,
+					},
+					{
+						Name:   "Used Prefix",
+						Value:  container.Prefix,
+						Inline: false,
 					},
 				},
-			})
-			if err != nil {
-				return err
-			}
-			return nil
+			},
+		})
+		if err != nil {
+			return err
 		}
+		return nil
 	}
 	return nil
 }
