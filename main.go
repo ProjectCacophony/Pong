@@ -53,11 +53,12 @@ func init() {
 	initFinishedAt = time.Now()
 }
 
+// Handler is the lambda entry point when event is triggered
 func Handler(container dhelpers.EventContainer) error {
 	// benchmark
 	handlerStart := time.Now()
 	defer func() {
-		fmt.Println("handler took", time.Now().Sub(handlerStart).String())
+		fmt.Println("handler took", time.Since(handlerStart).String())
 	}()
 
 	var err error
@@ -73,11 +74,12 @@ func Handler(container dhelpers.EventContainer) error {
 	return nil
 }
 
+// MessageCreate is triggered when a MessageCreate event has been received
 func MessageCreate(handleAt time.Time, container dhelpers.EventContainer) (err error) {
 	// benchmark
 	messageCreateStart := time.Now()
 	defer func() {
-		fmt.Println("messagecreate took", time.Now().Sub(messageCreateStart).String())
+		fmt.Println("messagecreate took", time.Since(messageCreateStart).String())
 	}()
 
 	// respond "pong!" to "ping"
@@ -122,7 +124,7 @@ func MessageCreate(handleAt time.Time, container dhelpers.EventContainer) (err e
 						},
 						{
 							Name:   "Gateway Uptime",
-							Value:  time.Now().Sub(container.GatewayStarted).String() + "\nStarted at " + strconv.FormatInt(container.GatewayStarted.Unix(), 10),
+							Value:  time.Since(container.GatewayStarted).String() + "\nStarted at " + strconv.FormatInt(container.GatewayStarted.Unix(), 10),
 							Inline: false,
 						},
 						{

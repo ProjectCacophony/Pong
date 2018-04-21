@@ -28,7 +28,7 @@ func newHandler(_ interface{}) lambdaHandler {
 			return nil, err
 		}
 		// benchmark
-		fmt.Println("unmarshal took", time.Now().Sub(unmarshalStart).String())
+		fmt.Println("unmarshal took", time.Since(unmarshalStart).String())
 
 		err = Handler(container)
 		return nil, err
