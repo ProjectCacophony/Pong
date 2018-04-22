@@ -1,10 +1,6 @@
 package main
 
 import (
-	"os"
-
-	"fmt"
-
 	"time"
 
 	"strconv"
@@ -18,30 +14,19 @@ import (
 )
 
 var (
-	token           string
-	discordEndpoint string
-	dg              *discordgo.Session
-	initAt          time.Time
-	initFinishedAt  time.Time
+	serviceName    = "lambda/pong"
+	initAt         time.Time
+	initFinishedAt time.Time
 )
 
 func init() {
 	// set init time
 	initAt = time.Now()
-	var err error
-	// read environment variables if set DISCORD_BOT_TOKEN=… DISCORD_ENDPOINT=…
-	token = os.Getenv("DISCORD_BOT_TOKEN")
-	discordEndpoint = os.Getenv("DISCORD_ENDPOINT")
 	// init components
+	components.InitLogger(serviceName)
+	err := components.InitSentry()
 	dhelpers.CheckErr(err)
-	components.InitLogger("lambda/pong")
-	err = components.InitSentry()
-	dhelpers.CheckErr(err)
-	// create a new Discordgo Bot Client
-	dhelpers.SetDiscordEndpoints(discordEndpoint)
-	fmt.Println("set Discord Endpoint API URL to", discordgo.EndpointAPI)
-	fmt.Println("connecting to Discord, Token Length:", len(token))
-	dg, err = discordgo.New("Bot " + token)
+	err = components.InitDiscord()
 	dhelpers.CheckErr(err)
 
 	initFinishedAt = time.Now()
@@ -75,7 +60,7 @@ func ping(container dhelpers.EventContainer) {
 
 	var err error
 
-	_, err = dg.ChannelMessageSendComplex(container.MessageCreate.ChannelID, &discordgo.MessageSend{
+	_, err = cache.GetDiscord().ChannelMessageSendComplex(container.MessageCreate.ChannelID, &discordgo.MessageSend{
 		Embed: &discordgo.MessageEmbed{
 			Title:     "Pong!",
 			Timestamp: time.Now().Format(time.RFC3339),
@@ -127,5 +112,5 @@ func ping(container dhelpers.EventContainer) {
 }
 
 func main() {
-	lambda.StartHandler(dhelpers.NewLambdaHandler("lambda/pong", Handler))
+	lambda.StartHandler(dhelpers.NewLambdaHandler(serviceName, Handler))
 }
