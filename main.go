@@ -19,8 +19,6 @@ func init() {
 	components.InitLogger(serviceName)
 	err := components.InitSentry()
 	dhelpers.CheckErr(err)
-	err = components.InitDiscord()
-	dhelpers.CheckErr(err)
 }
 
 // Handler is the lambda entry point when event is triggered
@@ -30,9 +28,14 @@ func Handler(event dhelpers.EventContainer) {
 	switch event.Type {
 	case dhelpers.MessageCreateEventType:
 
-		switch event.Args[0] {
-		case "ping", "pong":
-			ping(event)
+		for _, destination := range event.Destinations {
+
+			switch destination.Alias {
+			case "ping":
+
+				ping(event)
+				return
+			}
 		}
 	}
 }
@@ -46,7 +49,7 @@ func ping(container dhelpers.EventContainer) {
 	}()
 
 	// send ping response
-	_, err := cache.GetDiscord().ChannelMessageSendComplex(container.MessageCreate.ChannelID, &discordgo.MessageSend{
+	_, err := container.SendComplex(container.MessageCreate.ChannelID, &discordgo.MessageSend{
 		Embed: &discordgo.MessageEmbed{
 			Title: "Pong!",
 			Fields: []*discordgo.MessageEmbedField{
