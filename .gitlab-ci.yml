@@ -3,15 +3,17 @@ image: golang:1.10
 stages:
   - test
 
-variables:
-  NAMESPACE_SRC_DIR: "${GOPATH}/src/gitlab.com/${CI_PROJECT_NAMESPACE}"
-  PROJECT_SRC_DIR: "${NAMESPACE_SRC_DIR}/${CI_PROJECT_NAME}"
-
 before_script:
+  # Some variables we'll need...
+  - >
+    NAMESPACE_SRC_DIR="${GOPATH}/src/gitlab.com/${CI_PROJECT_NAMESPACE}"
+    PROJECT_SRC_DIR="${NAMESPACE_SRC_DIR}/${CI_PROJECT_NAME}"
+
   # Ensure a symlink to this project directory exists within GOPATH
   - mkdir -p "${NAMESPACE_SRC_DIR}"
   - ln -s "${CI_PROJECT_DIR}" "${PROJECT_SRC_DIR}"
   - cd "${PROJECT_SRC_DIR}"
+
   # install go dependencies
   # discordgo develop branch
   - >
@@ -20,6 +22,7 @@ before_script:
       cd ${GOPATH}/src/github.com/bwmarrin/discordgo
       git checkout develop
     )
+
   # all other dependencies
   - go get -v ./...
   # install linters
