@@ -22,3 +22,4 @@ Go Tests:
     - diff <(goimports -d .) <(echo -n)
     - go test -v -race ./...
     - gometalinter.v2 ./... --deadline 15m
+  retry: 1
