@@ -33,7 +33,7 @@ before_script:
 Go Tests:
   stage: test
   script:
-    - bash format_go.sh
+    - diff <(goimports -d .) <(echo -n)
     - go test -v -race $(go list ./... | grep -v /vendor/)
     - gometalinter.v2 --deadline 60m --concurrency=2 --vendor --exclude=^vendor\/ ./...
   retry: 1
