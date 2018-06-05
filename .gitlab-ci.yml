@@ -10,8 +10,19 @@ before_script:
   # Ensure a symlink to ${CI_PROJECT_DIR} exists before installing
   - mkdir -p "${PROJECT_SRC_DIR}"
   - ln -s "${CI_PROJECT_DIR}" "${PROJECT_SRC_DIR}/${CI_PROJECT_NAME}"
-  # install dependencies
+  #- mkdir -p ${GOPATH}/src/gitlab.com/${CI_PROJECT_NAMESPACE}
+  #- cd ${GOPATH}/src/gitlab.com/${CI_PROJECT_NAMESPACE}
+  #- ln -s ${CI_PROJECT_DIR}
+  #- cd ${CI_PROJECT_NAME}
+  # install go dependencies
+  # discordgo develop branch
+  - go get github.com/bwmarrin/discordgo
+  - cd ${GOPATH}/src/github.com/bwmarrin/discordgo
+  - git checkout develop
+  - cd ${GOPATH}/src/gitlab.com/${CI_PROJECT_NAMESPACE}/${CI_PROJECT_NAME}
+  # all other dependencies
   - go get -v ./...
+  # install linters
   - go get -v golang.org/x/tools/cmd/goimports
   - go get -v gopkg.in/alecthomas/gometalinter.v2
   - gometalinter.v2 --install
@@ -19,7 +30,7 @@ before_script:
 Go Tests:
   stage: test
   script:
-    - diff <(goimports -d .) <(echo -n)
-    - go test -v -race ./...
-    - gometalinter.v2 ./... --deadline 15m
+    - bash format_go.sh
+    - go test -v -race $(go list ./... | grep -v /vendor/)
+    - gometalinter.v2 --deadline 60m --concurrency=2 --vendor --exclude=^vendor\/ ./...
   retry: 1
