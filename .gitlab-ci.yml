@@ -16,7 +16,7 @@ before_script:
   - go get -v gopkg.in/alecthomas/gometalinter.v2
   - gometalinter.v2 --install
 
-testing:
+Go Tests:
   stage: test
   script:
     - diff <(goimports -d .) <(echo -n)
