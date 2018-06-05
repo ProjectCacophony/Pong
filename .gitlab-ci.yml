@@ -18,8 +18,8 @@ before_script:
   - >
     (
       go get -v github.com/bwmarrin/discordgo
-      && cd ${GOPATH}/src/github.com/bwmarrin/discordgo
-      && git checkout develop
+      cd ${GOPATH}/src/github.com/bwmarrin/discordgo
+      git checkout develop
     )
   # all other dependencies
   - go get -v ./...
