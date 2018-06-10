@@ -120,6 +120,6 @@ Terraform Apply:
     - staging
     - production
   environment:
-    name: ${TF_VAR_env_slug}
-    url: https://console.aws.amazon.com/lambda/home?region=us-east-1#/functions/pong-${TF_VAR_env_slug}?tab=graph
+    name: ${CI_COMMIT_REF_SLUG}
+    url: https://console.aws.amazon.com/lambda/home?region=us-east-1#/functions/pong-${CI_COMMIT_REF_SLUG}?tab=graph
   # when: manual
