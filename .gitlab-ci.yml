@@ -9,7 +9,7 @@ stages:
 variables:
   TF_IMAGE: hashicorp/terraform:0.11.7
   TF_BACKEND_S3_KEY: lambda/pong
-  TF_PLANFILE: "${CI_PROJECT_DIR}/.deployment/${CI_JOB_ID}.tfplan"
+  TF_PLANFILE: "${CI_PROJECT_DIR}/.deployment/${CI_PIPELINE_ID}.tfplan"
   GO_ARTIFACT: "${CI_PROJECT_DIR}/.deployment/pong"
 
 before_script:
