@@ -1,7 +1,16 @@
 image: golang:1.10
 
 stages:
+  - build
   - test
+  - stage
+  - deploy
+
+variables:
+  TF_IMAGE: hashicorp/terraform:0.11.7
+  TF_BACKEND_S3_KEY: lambda/pong
+  TF_PLANFILE: "${CI_PROJECT_DIR}/.deployment/${CI_JOB_ID}.tfplan"
+  GO_ARTIFACT: "${CI_PROJECT_DIR}/.deployment/pong"
 
 before_script:
   # Some variables we'll need...
@@ -32,16 +41,13 @@ before_script:
     gopkg.in/alecthomas/gometalinter.v2
   - gometalinter.v2 --install
 
-Terraform Plan:
-  image:
-    name: hashicorp/terraform:0.11.7
-    entrypoint: ["/usr/bin/env"]
-  stage: test
-  before_script:
-    - cd .deployment
-    - terraform init -backend-config="key=lambda/pong"
+Go Build:
   script:
-    - terraform plan
+    - go build -o "${GO_ARTIFACT}"
+  artifacts:
+    paths:
+      - "${GO_ARTIFACT}"
+    expire_in: 30 days
   retry: 1
 
 Go Tests:
@@ -58,4 +64,40 @@ Go Tests:
       ./...
   except:
     - master
+    - gitlab-ci
+  dependencies: []
   retry: 1
+
+Terraform Plan:
+  stage: stage
+  image:
+    name: ${TF_IMAGE}
+    entrypoint: ["/usr/bin/env"]
+  before_script:
+    - cd .deployment
+    - terraform init -backend-config="key=${TF_BACKEND_S3_KEY}"
+  script:
+    - terraform plan -out="${TF_PLANFILE}"
+  artifacts:
+    paths:
+      - "${TF_PLANFILE}"
+    expire_in: 30 days
+  dependencies:
+    - "Go Build"
+  retry: 1
+
+Terraform Apply:
+  stage: deploy
+  image:
+    name: ${TF_IMAGE}
+    entrypoint: ["/usr/bin/env"]
+  before_script:
+    - cd .deployment
+    - terraform init -backend-config="key=${TF_BACKEND_S3_KEY}"
+  script:
+    - terraform apply "${TF_PLANFILE}"
+  only:
+    - gitlab-ci
+  dependencies:
+    - "Go Build"
+    - "Terraform Plan"
