@@ -38,7 +38,7 @@ Go Build:
   stage: compile
   image: "${DOCKER_IMAGE}"
   script:
-    - go build -o "${GO_ARTIFACT}"
+    - go build -v -o "${GO_ARTIFACT}"
   artifacts:
     paths:
       - "${GO_ARTIFACT}"
