@@ -114,4 +114,4 @@ Terraform Apply:
   environment:
     name: ${TF_VAR_env_slug}
     url: https://console.aws.amazon.com/lambda/home?region=us-east-1#/functions/pong-${TF_VAR_env_slug}?tab=graph
-  when: manual
+  # when: manual
