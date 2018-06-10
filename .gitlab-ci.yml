@@ -101,3 +101,8 @@ Terraform Apply:
   dependencies:
     - "Go Build"
     - "Terraform Plan"
+  artifacts:
+    paths:
+      - .deployment
+    expire_in: 2 weeks
+    when: on_failure
