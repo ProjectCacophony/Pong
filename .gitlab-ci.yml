@@ -100,6 +100,37 @@ Terraform Plan:
       - "${TF_DIR}/*.zip"
       - "${TF_DIR}/*.tfplan"
     expire_in: 30 days
+  except:
+    - gitlab-ci
+    - staging
+    - production
+  dependencies:
+    - "Go Build"
+  retry: 1
+
+# Plan for environments
+Terraform Plan:
+  stage: stage
+  image:
+    name: ${TF_IMAGE}
+    entrypoint: ["/usr/bin/env"]
+  before_script:
+    - cd .deployment
+    - terraform init
+  script:
+    - terraform plan -out="${TF_PLANFILE}"
+  artifacts:
+    paths:
+      - "${TF_DIR}/*.zip"
+      - "${TF_DIR}/*.tfplan"
+    expire_in: 30 days
+  only:
+    - gitlab-ci
+    - staging
+    - production
+  environment:
+    name: ${CI_COMMIT_REF_SLUG}
+    url: https://console.aws.amazon.com/lambda/home?region=us-east-1#/functions/pong-${CI_COMMIT_REF_SLUG}?tab=graph
   dependencies:
     - "Go Build"
   retry: 1
