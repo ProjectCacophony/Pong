@@ -11,29 +11,7 @@ variables:
   TF_BACKEND_S3_KEY: lambda/pong
   TF_PLANFILE: "${CI_PROJECT_DIR}/.deployment/${CI_PIPELINE_ID}.tfplan"
   GO_ARTIFACT: "${CI_PROJECT_DIR}/.deployment/pong"
-
-before_script:
-  # Some variables we'll need...
-  - >
-    NAMESPACE_SRC_DIR="${GOPATH}/src/gitlab.com/${CI_PROJECT_NAMESPACE}"
-    PROJECT_SRC_DIR="${NAMESPACE_SRC_DIR}/${CI_PROJECT_NAME}"
-
-  # Ensure a symlink to this project directory exists within GOPATH
-  - mkdir -p "${NAMESPACE_SRC_DIR}"
-  - ln -s "${CI_PROJECT_DIR}" "${PROJECT_SRC_DIR}"
-  - cd "${PROJECT_SRC_DIR}"
-
-  # install go dependencies
-  # discordgo develop branch
-  - >
-    (
-      go get -v github.com/bwmarrin/discordgo
-      cd ${GOPATH}/src/github.com/bwmarrin/discordgo
-      git checkout develop
-    )
-
-  # all other dependencies
-  - go get -v ./...
+  DOCKER_IMAGE: "${CI_REGISTRY_IMAGE}:${CI_COMMIT_REF_SLUG}"
 
 Go Build:
   script:
@@ -44,7 +22,23 @@ Go Build:
     expire_in: 30 days
   retry: 1
 
+Docker Build:
+  stage: build
+  image: docker:latest
+  services:
+    - docker:dind
+  before_script:
+    - >
+      docker login
+      --username "${CI_REGISTRY_USER}"
+      --password "${CI_REGISTRY_PASSWORD}"
+  script:
+    - docker pull "${DOCKER_IMAGE}" || true
+    - docker build -t "${DOCKER_IMAGE}" "${CI_PROJECT_DIR}"
+    - docker push "${DOCKER_IMAGE}"
+
 Go Tests:
+  image: "${DOCKER_IMAGE}"
   stage: test
   script:
     # install linters
