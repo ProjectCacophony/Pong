@@ -65,8 +65,9 @@ Go Tests:
       --exclude=^vendor\/
       ./...
   except:
-    - master
     - gitlab-ci
+    - staging
+    - production
   dependencies: []
   retry: 1
 
