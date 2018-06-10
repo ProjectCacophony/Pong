@@ -1,8 +1,8 @@
 # Build the archive file to send to lambda
 data "archive_file" "pkg" {
   type        = "zip"
-  source_file = "${path.module}/pong"
-  output_path = "${path.module}/pong_lambda_pkg.zip"
+  source_file = "pong"
+  output_path = "pong_lambda_pkg.zip"
 }
 
 resource "aws_iam_role" "lambda_role" {
