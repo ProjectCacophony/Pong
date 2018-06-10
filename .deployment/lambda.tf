@@ -1,7 +1,7 @@
 # Build the archive file to send to lambda
 data "archive_file" "pkg" {
   type        = "zip"
-  source_file = "pong"
+  source_file = "${path.module}/pong"
   output_path = "${path.module}/pong_lambda_pkg.zip"
 }
 
@@ -23,6 +23,4 @@ resource "aws_lambda_function" "lambda_pong" {
       Environment = "staging"
     }
   }
-
-  depends_on = ["archive_file.pkg"]
 }

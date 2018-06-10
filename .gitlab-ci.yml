@@ -9,6 +9,7 @@ stages:
 
 variables:
   TF_IMAGE: hashicorp/terraform:0.11.7
+  TF_DIR: "${CI_PROJECT_DIR}/.deployment"
   TF_PLANFILE: "${CI_PROJECT_DIR}/.deployment/${CI_PIPELINE_ID}.tfplan"
   GO_ARTIFACT: "${CI_PROJECT_DIR}/.deployment/pong"
   DOCKER_IMAGE: "${CI_REGISTRY_IMAGE}:${CI_COMMIT_REF_SLUG}"
@@ -81,7 +82,8 @@ Terraform Plan:
     - terraform plan -out="${TF_PLANFILE}"
   artifacts:
     paths:
-      - "${TF_PLANFILE}"
+      - "${TF_DIR}/*.zip"
+      - "${TF_DIR}/*.tfplan"
     expire_in: 30 days
   dependencies:
     - "Go Build"
@@ -100,7 +102,6 @@ Terraform Apply:
   only:
     - gitlab-ci
   dependencies:
-    - "Go Build"
     - "Terraform Plan"
   artifacts:
     paths:
