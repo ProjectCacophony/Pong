@@ -48,6 +48,12 @@ Go Build:
 Go Tests:
   image: "${DOCKER_IMAGE}"
   stage: test
+  variables:
+    SRC_DIR: "gitlab.com/${CI_PROJECT_PATH}"
+  before_script:
+    - SRC_PATH="${GOPATH}/src/${SRC_DIR}"
+    - ln -s "${CI_PROJECT_DIR}" "${SRC_PATH}"
+    - cd "${SRC_PATH}"
   script:
     # install linters
     - >
