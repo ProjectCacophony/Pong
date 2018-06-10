@@ -77,3 +77,6 @@ $RECYCLE.BIN/
 
 ### Repo ###
 gateway
+
+### Terraform ###
+.terraform
