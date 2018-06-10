@@ -104,8 +104,6 @@ Terraform Apply:
   before_script:
     - cd .deployment
     - terraform init
-    - 'echo "TF_VAR_env_slug: ${TF_VAR_env_slug}"'
-    - 'echo "TF_WORKSPACE:    ${TF_WORKSPACE}"'
   script:
     - terraform apply "${TF_PLANFILE}"
   dependencies:
