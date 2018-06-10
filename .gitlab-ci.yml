@@ -85,6 +85,14 @@ Terraform Plan:
   before_script:
     - cd .deployment
     - terraform init
+    - >
+      [ -z ${AWS_ACCESS_KEY_ID} ] &&
+      export AWS_ACCESS_KEY_ID=${RO_AWS_ACCESS_KEY_ID} &&
+      echo "Read-only Access Key ID loaded."
+    - >
+      [ -z ${AWS_SECRET_ACCESS_KEY} ] &&
+      export AWS_SECRET_ACCESS_KEY=${RO_AWS_SECRET_ACCESS_KEY} &&
+      echo "Read-only Secret Access Key loaded."
   script:
     - terraform plan -out="${TF_PLANFILE}"
   artifacts:
