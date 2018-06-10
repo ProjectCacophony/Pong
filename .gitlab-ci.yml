@@ -9,7 +9,6 @@ stages:
 
 variables:
   TF_IMAGE: hashicorp/terraform:0.11.7
-  TF_BACKEND_S3_KEY: lambda/pong
   TF_PLANFILE: "${CI_PROJECT_DIR}/.deployment/${CI_PIPELINE_ID}.tfplan"
   GO_ARTIFACT: "${CI_PROJECT_DIR}/.deployment/pong"
   DOCKER_IMAGE: "${CI_REGISTRY_IMAGE}:${CI_COMMIT_REF_SLUG}"
@@ -77,7 +76,7 @@ Terraform Plan:
     entrypoint: ["/usr/bin/env"]
   before_script:
     - cd .deployment
-    - terraform init -backend-config="key=${TF_BACKEND_S3_KEY}"
+    - terraform init
   script:
     - terraform plan -out="${TF_PLANFILE}"
   artifacts:
@@ -95,7 +94,7 @@ Terraform Apply:
     entrypoint: ["/usr/bin/env"]
   before_script:
     - cd .deployment
-    - terraform init -backend-config="key=${TF_BACKEND_S3_KEY}"
+    - terraform init
   script:
     - terraform apply "${TF_PLANFILE}"
   only:

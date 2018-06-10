@@ -23,4 +23,6 @@ resource "aws_lambda_function" "lambda_pong" {
       Environment = "staging"
     }
   }
+
+  depends_on = ["archive_file.pkg"]
 }
