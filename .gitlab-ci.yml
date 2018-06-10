@@ -34,12 +34,6 @@ before_script:
 
   # all other dependencies
   - go get -v ./...
-  # install linters
-  - >
-    go get -v
-    golang.org/x/tools/cmd/goimports
-    gopkg.in/alecthomas/gometalinter.v2
-  - gometalinter.v2 --install
 
 Go Build:
   script:
@@ -53,6 +47,12 @@ Go Build:
 Go Tests:
   stage: test
   script:
+    # install linters
+    - >
+      go get -v
+      golang.org/x/tools/cmd/goimports
+      gopkg.in/alecthomas/gometalinter.v2
+    - gometalinter.v2 --install
     - diff <(goimports -d .) <(echo -n)
     - go test -v -race "$(go list ./... | grep -v /vendor/)"
     - >
