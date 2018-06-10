@@ -36,6 +36,12 @@ Go Tests:
   stage: test
   script:
     - diff <(goimports -d .) <(echo -n)
-    - go test -v -race $(go list ./... | grep -v /vendor/)
-    - gometalinter.v2 --deadline 50m --concurrency=2 --vendor --exclude=^vendor\/ ./...
+    - go test -v -race "$(go list ./... | grep -v /vendor/)"
+    - >
+      gometalinter.v2
+      --deadline 50m
+      --concurrency=2
+      --vendor
+      --exclude=^vendor\/
+      ./...
   retry: 1
