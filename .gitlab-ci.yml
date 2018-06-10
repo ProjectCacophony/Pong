@@ -2,7 +2,7 @@ image: golang:1.10
 
 stages:
   - build
-  - package
+  - compile
   - test
   - stage
   - deploy
@@ -27,11 +27,15 @@ Docker Build:
       "${CI_REGISTRY}"
   script:
     - docker pull "${DOCKER_IMAGE}" || true
-    - docker build -t "${DOCKER_IMAGE}" "${CI_PROJECT_DIR}"
+    - >
+      docker build
+      --tag "${DOCKER_IMAGE}"
+      --cache-from "${DOCKER_IMAGE}"
+      "${CI_PROJECT_DIR}"
     - docker push "${DOCKER_IMAGE}"
 
 Go Build:
-  stage: package
+  stage: compile
   image: "${DOCKER_IMAGE}"
   script:
     - go build -o "${GO_ARTIFACT}"
