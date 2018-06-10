@@ -32,6 +32,18 @@ before_script:
     gopkg.in/alecthomas/gometalinter.v2
   - gometalinter.v2 --install
 
+Terraform Plan:
+  image:
+    name: hashicorp/terraform:0.11.7
+    entrypoint: ["/usr/bin/env"]
+  stage: test
+  before_script:
+    - cd .deployment
+    - terraform init -backend-config="key=lambda/pong"
+  script:
+    - terraform plan
+  retry: 1
+
 Go Tests:
   stage: test
   script:
@@ -44,4 +56,6 @@ Go Tests:
       --vendor
       --exclude=^vendor\/
       ./...
+  except:
+    - master
   retry: 1
