@@ -59,17 +59,8 @@ Go Tests:
     - >
       go get -v
       golang.org/x/tools/cmd/goimports
-      gopkg.in/alecthomas/gometalinter.v2
-    - gometalinter.v2 --install
     - diff <(goimports -d .) <(echo -n)
     - go test -v -race "$(go list ./... | grep -v /vendor/)"
-    - >
-      gometalinter.v2
-      --deadline 50m
-      --concurrency=2
-      --vendor
-      --exclude=^vendor\/
-      ./...
   except:
     - gitlab-ci
     - staging
